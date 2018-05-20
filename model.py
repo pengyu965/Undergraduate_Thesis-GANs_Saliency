@@ -429,12 +429,14 @@ class DCGAN(object):
         s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
 
         # project `z` and reshape
-        h0 = tf.reshape(
-            linear(z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin'),
-            [-1, s_h16, s_w16, self.gf_dim * 8])
-        h0 = tf.nn.relu(self.g_bn0(h0, train=False))
 
-        h1 = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
+        h_0 = lrelu(conv2d(z, self.df_dim, name='d_h0_conv'))
+        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='d_h1_conv')))
+        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='d_h2_conv')))
+        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='d_h3_conv')))
+
+
+        h1 = deconv2d(h_3, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
         h1 = tf.nn.relu(self.g_bn1(h1, train=False))
 
         h2 = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2')
