@@ -187,7 +187,7 @@ class DCGAN(object):
                     grayscale=self.grayscale) for origin_sample_file in origin_sample_files]
       if (self.grayscale):
         sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-        sample_origins = np.array(oringin_sample).astype(np.float32)[:, :, :, None]
+        sample_origins = np.array(origin_sample).astype(np.float32)[:, :, :, None]
       else:
         sample_inputs = np.array(sample).astype(np.float32)
         sample_origins = np.array(origin_sample).astype(np.float32)
