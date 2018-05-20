@@ -168,6 +168,7 @@ class DCGAN(object):
       sample_labels = self.data_y[0:self.sample_num]
     else:
       sample_files = self.data[0:self.sample_num]
+      origin_sample_files = self.origin_data[0:self.sample_num]
       sample = [
           get_image(sample_file,
                     input_height=self.input_height,
@@ -176,10 +177,20 @@ class DCGAN(object):
                     resize_width=self.output_width,
                     crop=self.crop,
                     grayscale=self.grayscale) for sample_file in sample_files]
+      origin_sample = [
+          get_image(origin_sample_file,
+                    input_height=self.input_height,
+                    input_width=self.input_width,
+                    resize_height=self.output_height,
+                    resize_width=self.output_width,
+                    crop=self.crop,
+                    grayscale=self.grayscale) for origin_sample_file in origin_sample_files]
       if (self.grayscale):
         sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
+        sample_origins = np.array(oringin_sample).astype(np.float32)[:, :, :, None]
       else:
         sample_inputs = np.array(sample).astype(np.float32)
+        sample_origins = np.array(origin_sample).astype(np.float32)
   
     counter = 1
     start_time = time.time()
@@ -294,7 +305,7 @@ class DCGAN(object):
             samples, d_loss, g_loss = self.sess.run(
               [self.sampler, self.d_loss, self.g_loss],
               feed_dict={
-                  self.z: sample_z,
+                  self.z: sample_origins,
                   self.inputs: sample_inputs,
                   self.y:sample_labels,
               }
@@ -307,7 +318,7 @@ class DCGAN(object):
               samples, d_loss, g_loss = self.sess.run(
                 [self.sampler, self.d_loss, self.g_loss],
                 feed_dict={
-                    self.z: sample_z,
+                    self.z: sample_origins,
                     self.inputs: sample_inputs,
                 },
               )
@@ -317,7 +328,7 @@ class DCGAN(object):
             except:
               print("one pic error!...")
 
-        if np.mod(counter, 500) == 2:
+        if np.mod(counter, 500) == 1:
           self.save(config.checkpoint_dir, counter)
 
   def discriminator(self, image, y=None, reuse=False):
