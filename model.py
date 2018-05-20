@@ -17,7 +17,7 @@ class DCGAN(object):
   def __init__(self, sess, input_height=108, input_width=108, crop=True,
          batch_size=64, sample_num = 64, output_height=64, output_width=64,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-         gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default', groundtruth_name='default',
+         gfc_dim=1024, dfc_dim=1024, c_dim=3, origin_name='default', dataset_name='default', 
          input_fname_pattern='*.png', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
     """
 
@@ -67,7 +67,7 @@ class DCGAN(object):
       self.g_bn3 = batch_norm(name='g_bn3')
 
     self.dataset_name = dataset_name
-    self.groundtruth_name = groundtruth_name
+    self.origin_name = origin_name
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
     self.data_dir = data_dir
@@ -77,7 +77,7 @@ class DCGAN(object):
       self.c_dim = self.data_X[0].shape[-1]
     else:
       self.data = glob(os.path.join(self.data_dir, self.dataset_name, self.input_fname_pattern))
-      self.gt_data = glob(os.path.join(self.data_dir, self.groundtruth_name, "*.jpg"))
+      self.origin_data = glob(os.path.join(self.data_dir, self.origin_name, "*.jpg"))
       imreadImg = imread(self.data[0])
       if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
         self.c_dim = imread(self.data[0]).shape[-1]
@@ -204,7 +204,7 @@ class DCGAN(object):
           batch_labels = self.data_y[idx*config.batch_size:(idx+1)*config.batch_size]
         else:
           batch_files = self.data[idx*config.batch_size:(idx+1)*config.batch_size]
-          gt_batch_files = self.gt_data[idx*config.batch_size:(idx+1)*config.batch_size]
+          origin_batch_files = self.origin_data[idx*config.batch_size:(idx+1)*config.batch_size]
           batch = [
               get_image(batch_file,
                         input_height=self.input_height,
@@ -213,21 +213,21 @@ class DCGAN(object):
                         resize_width=self.output_width,
                         crop=self.crop,
                         grayscale=self.grayscale) for batch_file in batch_files]
-          gt_batch = [
-              get_image(gt_batch_file,
+          origin_batch = [
+              get_image(origin_batch_file,
                         input_height=self.input_height,
                         input_width=self.input_width,
                         resize_height=self.output_height,
                         resize_width=self.output_width,
                         crop=self.crop,
-                        grayscale=self.grayscale) for gt_batch_file in gt_batch_files]
+                        grayscale=self.grayscale) for origin_batch_file in origin_batch_files]
           
           if self.grayscale:
             batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
-            gt_batch_images = np.array(gt_batch).astype(np.float32)[:, :, :, None]
+            origin_batch_images = np.array(origin_batch).astype(np.float32)[:, :, :, None]
           else:
             batch_images = np.array(batch).astype(np.float32)
-            gt_batch_images = np.array(gt_batch).astype(np.float32)
+            origin_batch_images = np.array(origin_batch).astype(np.float32)
 
         if config.dataset == 'mnist':
           # Update D network
@@ -267,22 +267,22 @@ class DCGAN(object):
         else:
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
-            feed_dict={ self.inputs: batch_images, self.z: gt_batch_images })
+            feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)
 
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: gt_batch_images })
+            feed_dict={ self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)
 
           # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
           _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: gt_batch_images })
+            feed_dict={ self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)
           
-          errD_fake = self.d_loss_fake.eval({ self.z: gt_batch_images })
+          errD_fake = self.d_loss_fake.eval({ self.z: origin_batch_images })
           errD_real = self.d_loss_real.eval({ self.inputs: batch_images })
-          errG = self.g_loss.eval({self.z: gt_batch_imagesz})
+          errG = self.g_loss.eval({self.z: origin_batch_images})
 
         counter += 1
         print("Epoch: [%2d/%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
