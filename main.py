@@ -74,6 +74,7 @@ def main(_):
           sample_num=FLAGS.batch_size,
           z_dim=FLAGS.generate_test_images,
           dataset_name=FLAGS.dataset,
+          groundtruth_name=FLAGS.groundtruth,
           input_fname_pattern=FLAGS.input_fname_pattern,
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
