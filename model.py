@@ -18,7 +18,7 @@ class DCGAN(object):
          batch_size=64, sample_num = 64, output_height=64, output_width=64,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, origin_name='default', dataset_name='default', 
-         input_fname_pattern='*.png', checkpoint_dir=None, sample_dir=None, data_dir='./data'):
+         input_fname_pattern="*.png", checkpoint_dir=None, sample_dir=None, data_dir='./data'):
     """
 
     Args:
@@ -373,9 +373,9 @@ class DCGAN(object):
 
 # modified here
         h_0 = lrelu(conv2d(z, self.df_dim, name='d_h0_conv'))
-        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='d_h1_conv')))
-        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='d_h2_conv')))
-        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='d_h3_conv')))
+        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
+        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
+        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
         # h_4 = linear(tf.reshape(h_3, [self.batch_size, -1]), 100, 'd_h4_lin')
 
         # # project `z` and reshape
@@ -442,9 +442,9 @@ class DCGAN(object):
         # project `z` and reshape
 
         h_0 = lrelu(conv2d(z, self.df_dim, name='d_h0_conv'))
-        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='d_h1_conv')))
-        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='d_h2_conv')))
-        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='d_h3_conv')))
+        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
+        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
+        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
 
 
         h1 = deconv2d(h_3, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
