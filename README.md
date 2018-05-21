@@ -4,6 +4,7 @@ To train a model with downloaded dataset:
 
     $ python main.py --dataset mnist --input_height=28 --output_height=28 --train
     $ python main.py --dataset celebA --input_height=108 --train --crop
+    $ python main.py --origin input --dataset gt --input_height=108 --input_fname_pattern="*.png" --train --crop
 
 To test with an existing model:
 
