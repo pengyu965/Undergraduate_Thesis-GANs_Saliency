@@ -13,6 +13,7 @@ from six.moves import xrange
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+import os
 
 pp = pprint.PrettyPrinter()
 
@@ -177,22 +178,14 @@ def visualize(sess, dcgan, config, option):
     save_images(samples, [image_frame_dim, image_frame_dim], './samples/test_%s.png' % strftime("%Y-%m-%d-%H-%M-%S", gmtime()))
   elif option == 1:
     values = np.arange(0, 1, 1./config.batch_size)
-    for idx in xrange(dcgan.z_dim):
-      print(" [*] %d" % idx)
-      z_sample = np.random.uniform(-1, 1, size=(config.batch_size , dcgan.z_dim))
-      for kdx, z in enumerate(z_sample):
-        z[idx] = values[kdx]
+    all_file_name = os.listdir("./data/input/")
+    for idx in all_file_name:
+      print(" [Saliency]_%d" % idx)
+      z_sample = scipy.misc.imread("./data/input/"+idx).astype(np.float)
 
-      if config.dataset == "mnist":
-        y = np.random.choice(10, config.batch_size)
-        y_one_hot = np.zeros((config.batch_size, 10))
-        y_one_hot[np.arange(config.batch_size), y] = 1
+      samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
 
-        samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample, dcgan.y: y_one_hot})
-      else:
-        samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
-
-      save_images(samples, [image_frame_dim, image_frame_dim], './samples/test_arange_%s.png' % (idx))
+      save_images(samples,[1,1], './samples/test_arange_%s.png' % (idx))
   elif option == 2:
     values = np.arange(0, 1, 1./config.batch_size)
     for idx in [random.randint(0, dcgan.z_dim - 1) for _ in xrange(dcgan.z_dim)]:
