@@ -14,9 +14,9 @@ def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
 
 class DCGAN(object):
-  def __init__(self, sess, input_height=108, input_width=108, crop=True,
-         batch_size=64, sample_num = 64, output_height=64, output_width=64,
-         y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
+  def __init__(self, sess, input_height=128, input_width=128, crop=False,
+         batch_size=64, sample_num = 64, output_height=128, output_width=128,
+         y_dim=None, z_dim=100, gf_dim=128, df_dim=128,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, origin_name='default', dataset_name='default', 
          input_fname_pattern="*.png", checkpoint_dir=None, sample_dir=None, data_dir='./data'):
     """
@@ -280,6 +280,16 @@ class DCGAN(object):
           _, summary_str = self.sess.run([d_optim, self.d_sum],
             feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)
+          
+          # Run D twice
+          _, summary_str = self.sess.run([d_optim, self.d_sum],
+            feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
+          self.writer.add_summary(summary_str, counter)
+
+          #Run D triple
+          _, summary_str = self.sess.run([d_optim, self.d_sum],
+            feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
+          self.writer.add_summary(summary_str, counter)
 
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
@@ -287,6 +297,11 @@ class DCGAN(object):
           self.writer.add_summary(summary_str, counter)
 
           # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+          _, summary_str = self.sess.run([g_optim, self.g_sum],
+            feed_dict={ self.z: origin_batch_images })
+          self.writer.add_summary(summary_str, counter)
+
+          # Run G triple
           _, summary_str = self.sess.run([g_optim, self.g_sum],
             feed_dict={ self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)

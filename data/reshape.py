@@ -16,7 +16,7 @@ save_dir="./out_gt/"
 filename = os.listdir(files_dir)
 for name in filename:
     img=Image.open(files_dir + name)
-    new_img = img.resize((108,108),Image.ANTIALIAS)
+    new_img = img.resize((128,128),Image.ANTIALIAS)
     # os.path.join(save_dir, new_img)
-    new_img.save("./out_gt/" + name)
+    new_img.save(save_dir + name)
 
