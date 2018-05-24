@@ -16,7 +16,7 @@ def conv_out_size_same(size, stride):
 class DCGAN(object):
   def __init__(self, sess, input_height=128, input_width=128, crop=False,
          batch_size=64, sample_num = 64, output_height=128, output_width=128,
-         y_dim=None, z_dim=100, gf_dim=128, df_dim=128,
+         y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, origin_name='default', dataset_name='default', 
          input_fname_pattern="*.png", checkpoint_dir=None, sample_dir=None, data_dir='./data'):
     """
@@ -79,12 +79,19 @@ class DCGAN(object):
       self.data = glob(os.path.join(self.data_dir, self.dataset_name, self.input_fname_pattern))
       self.origin_data = glob(os.path.join(self.data_dir, self.origin_name, "*.jpg"))
       imreadImg = imread(self.data[0])
+      imreadOri = imread(self.origin_data[0])
       if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
         self.c_dim = imread(self.data[0]).shape[-1]
       else:
         self.c_dim = 1
+      
+      if len(imreadOri.shape) >= 3:
+        self.ori_dim = imread(self.origin_data[0]).shape[-1]
+      else:
+        self.ori_dim = 1
 
     self.grayscale = (self.c_dim == 1)
+    self.origin_grayscale = (self.ori_dim == 1)
 
     self.build_model()
 
@@ -96,8 +103,10 @@ class DCGAN(object):
 
     if self.crop:
       image_dims = [self.output_height, self.output_width, self.c_dim]
+      origin_dims = [self.input_height, self.input_width, self.ori_dim]
     else:
       image_dims = [self.input_height, self.input_width, self.c_dim]
+      origin_dims = [self.input_height, self.input_width, self.ori_dim]
 
     self.inputs = tf.placeholder(
       tf.float32, [self.batch_size] + image_dims, name='real_images')
@@ -105,7 +114,7 @@ class DCGAN(object):
     inputs = self.inputs
 
     self.z = tf.placeholder(
-      tf.float32, [self.batch_size] + image_dims, name='z')
+      tf.float32, [self.batch_size] + origin_dims, name='z')
     self.z_sum = histogram_summary("z", self.z)
 
     self.G                  = self.generator(self.z, self.y)
@@ -160,8 +169,6 @@ class DCGAN(object):
     self.d_sum = merge_summary(
         [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
     self.writer = SummaryWriter("./logs", self.sess.graph)
-
-    sample_z = np.random.uniform(-1, 1, size=(self.sample_num , self.z_dim))
     
     if config.dataset == 'mnist':
       sample_inputs = self.data_X[0:self.sample_num]
@@ -178,18 +185,15 @@ class DCGAN(object):
                     crop=self.crop,
                     grayscale=self.grayscale) for sample_file in sample_files]
       origin_sample = [
-          get_image(origin_sample_file,
-                    input_height=self.input_height,
-                    input_width=self.input_width,
-                    resize_height=self.output_height,
-                    resize_width=self.output_width,
-                    crop=self.crop,
-                    grayscale=self.grayscale) for origin_sample_file in origin_sample_files]
-      if (self.grayscale):
+          np.load(origin_sample_file) for origin_sample_file in origin_sample_files]
+      if self.grayscale:
         sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-        sample_origins = np.array(origin_sample).astype(np.float32)[:, :, :, None]
       else:
         sample_inputs = np.array(sample).astype(np.float32)
+
+      if self.origin_grayscale:
+        sample_origins = np.array(origin_sample).astype(np.float32)[:, :, :, None]
+      else:
         sample_origins = np.array(origin_sample).astype(np.float32)
   
     counter = 1
@@ -207,6 +211,8 @@ class DCGAN(object):
       else:      
         self.data = glob(os.path.join(
           config.data_dir, config.dataset, self.input_fname_pattern))
+        self.origin_data = glob(os.path.join(
+          config.data_dir, config.origin, "*.jpg"))
         batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
       for idx in xrange(0, batch_idxs):
@@ -225,20 +231,19 @@ class DCGAN(object):
                         crop=self.crop,
                         grayscale=self.grayscale) for batch_file in batch_files]
           origin_batch = [
-              get_image(origin_batch_file,
-                        input_height=self.input_height,
-                        input_width=self.input_width,
-                        resize_height=self.output_height,
-                        resize_width=self.output_width,
-                        crop=self.crop,
-                        grayscale=self.grayscale) for origin_batch_file in origin_batch_files]
+              np.load(origin_batch_file) for origin_batch_file in origin_batch_files]
           
           if self.grayscale:
             batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
-            origin_batch_images = np.array(origin_batch).astype(np.float32)[:, :, :, None]
           else:
             batch_images = np.array(batch).astype(np.float32)
+
+          if self.origin_grayscale:
+            origin_batch_images = np.array(origin_batch).astype(np.float32)[:, :, :, None]
+          else:
             origin_batch_images = np.array(origin_batch).astype(np.float32)
+
+
 
         if config.dataset == 'mnist':
           # Update D network
@@ -286,10 +291,10 @@ class DCGAN(object):
             feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
           self.writer.add_summary(summary_str, counter)
 
-          #Run D triple
-          _, summary_str = self.sess.run([d_optim, self.d_sum],
-            feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
-          self.writer.add_summary(summary_str, counter)
+          # #Run D triple
+          # _, summary_str = self.sess.run([d_optim, self.d_sum],
+          #   feed_dict={ self.inputs: batch_images, self.z: origin_batch_images })
+          # self.writer.add_summary(summary_str, counter)
 
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
@@ -537,7 +542,7 @@ class DCGAN(object):
   @property
   def model_dir(self):
     return "{}_{}_{}_{}".format(
-        self.dataset_name, self.batch_size,
+        self.input_height, self.input_width,
         self.output_height, self.output_width)
       
   def save(self, checkpoint_dir, step):

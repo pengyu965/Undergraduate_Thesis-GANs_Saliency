@@ -62,6 +62,7 @@ def conv2d(input_, output_dim,
 
     return conv
 
+
 def deconv2d(input_, output_shape,
        k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
        name="deconv2d", with_w=False):

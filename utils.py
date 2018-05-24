@@ -78,7 +78,7 @@ def center_crop(x, crop_h, crop_w,
       x[j:j+crop_h, i:i+crop_w], [resize_h, resize_w])
 
 def transform(image, input_height, input_width, 
-              resize_height=64, resize_width=64, crop=True):
+              resize_height=128, resize_width=128, crop=True):
   if crop:
     cropped_image = center_crop(
       image, input_height, input_width, 
@@ -178,14 +178,28 @@ def visualize(sess, dcgan, config, option):
     save_images(samples, [image_frame_dim, image_frame_dim], './samples/test_%s.png' % strftime("%Y-%m-%d-%H-%M-%S", gmtime()))
   elif option == 1:
     values = np.arange(0, 1, 1./config.batch_size)
-    all_file_name = os.listdir("./data/input/")
+    all_file_name = os.listdir("./data/"+dcgan.origin_name)
+    i = 1
     for idx in all_file_name:
-      print(" [Saliency]_%d" % idx)
-      z_sample = scipy.misc.imread("./data/input/"+idx).astype(np.float)
+      print(" [Saliency]_%s" % idx)
+      # z_sample = scipy.misc.imread("./data/out_input/"+idx).astype(np.float)
+      # dcgan.batch_size = 1
+      origin_batch_files = dcgan.origin_data[(i-1)*config.batch_size:i*config.batch_size]
+      origin_batch = [
+              np.load(origin_batch_file) for origin_batch_file in origin_batch_files]
+      if dcgan.origin_grayscale:
+        origin_batch_images = np.array(origin_batch).astype(np.float32)[:, :, :, None]
+      else:
+        origin_batch_images = np.array(origin_batch).astype(np.float32)
 
-      samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
+      
+      samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: origin_batch_images})
+      # samples.save('./samples/test_arange_%s.png' % (idx))
+      i = i+1
+      save_images(samples,[image_frame_dim, image_frame_dim], './test_result/test_arange_%s.png' % (idx))
+      if i * config.batch_size > len(dcgan.origin_data):
+        break
 
-      save_images(samples,[1,1], './samples/test_arange_%s.png' % (idx))
   elif option == 2:
     values = np.arange(0, 1, 1./config.batch_size)
     for idx in [random.randint(0, dcgan.z_dim - 1) for _ in xrange(dcgan.z_dim)]:
