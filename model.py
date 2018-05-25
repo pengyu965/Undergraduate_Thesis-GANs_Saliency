@@ -55,9 +55,12 @@ class DCGAN(object):
     # batch normalization : deals with poor initialization helps gradient flow
     self.d_bn1 = batch_norm(name='d_bn1')
     self.d_bn2 = batch_norm(name='d_bn2')
+    self.dg_bn1 = batch_norm(name='dg_bn1')
+    self.dg_bn2 = batch_norm(name='dg_bn2')
 
     if not self.y_dim:
       self.d_bn3 = batch_norm(name='d_bn3')
+      self.dg_bn3 = batch_norm(name='dg_bn3')
 
     self.g_bn0 = batch_norm(name='g_bn0')
     self.g_bn1 = batch_norm(name='g_bn1')
@@ -77,16 +80,16 @@ class DCGAN(object):
       self.c_dim = self.data_X[0].shape[-1]
     else:
       self.data = glob(os.path.join(self.data_dir, self.dataset_name, self.input_fname_pattern))
-      self.origin_data = glob(os.path.join(self.data_dir, self.origin_name, "*.jpg"))
+      self.origin_data = glob(os.path.join(self.data_dir, self.origin_name, "*"))
       imreadImg = imread(self.data[0])
-      imreadOri = imread(self.origin_data[0])
+      imreadOri = np.load(self.origin_data[0])
       if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
         self.c_dim = imread(self.data[0]).shape[-1]
       else:
         self.c_dim = 1
       
       if len(imreadOri.shape) >= 3:
-        self.ori_dim = imread(self.origin_data[0]).shape[-1]
+        self.ori_dim = np.load(self.origin_data[0]).shape[-1]
       else:
         self.ori_dim = 1
 
@@ -212,7 +215,7 @@ class DCGAN(object):
         self.data = glob(os.path.join(
           config.data_dir, config.dataset, self.input_fname_pattern))
         self.origin_data = glob(os.path.join(
-          config.data_dir, config.origin, "*.jpg"))
+          config.data_dir, config.origin, "*"))
         batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
       for idx in xrange(0, batch_idxs):
@@ -392,10 +395,10 @@ class DCGAN(object):
         s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
 
 # modified here
-        h_0 = lrelu(conv2d(z, self.df_dim, name='d_h0_conv'))
-        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
-        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
-        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
+        h_0 = lrelu(conv2d(z, self.df_dim, name='d_h_0_conv'))
+        h_1 = lrelu(self.dg_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
+        h_2 = lrelu(self.dg_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
+        h_3 = lrelu(self.dg_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
         # h_4 = linear(tf.reshape(h_3, [self.batch_size, -1]), 100, 'd_h4_lin')
 
         # # project `z` and reshape
@@ -415,7 +418,7 @@ class DCGAN(object):
         h2 = tf.nn.relu(self.g_bn2(h2))
 
         h3, self.h3_w, self.h3_b = deconv2d(
-            h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3', with_w=True)
+            h2, [self.batch_size, s_h2, s_w2, self.gf_dim], name='g_h3', with_w=True)
         h3 = tf.nn.relu(self.g_bn3(h3))
 
         h4, self.h4_w, self.h4_b = deconv2d(
@@ -461,10 +464,10 @@ class DCGAN(object):
 
         # project `z` and reshape
 
-        h_0 = lrelu(conv2d(z, self.df_dim, name='d_h0_conv'))
-        h_1 = lrelu(self.d_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
-        h_2 = lrelu(self.d_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
-        h_3 = lrelu(self.d_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
+        h_0 = lrelu(conv2d(z, self.df_dim, name='d_h_0_conv'))
+        h_1 = lrelu(self.dg_bn1(conv2d(h_0, self.df_dim*2, name='g_h_1_conv')))
+        h_2 = lrelu(self.dg_bn2(conv2d(h_1, self.df_dim*4, name='g_h_2_conv')))
+        h_3 = lrelu(self.dg_bn3(conv2d(h_2, self.df_dim*8, name='g_h_3_conv')))
 
 
         h1 = deconv2d(h_3, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
