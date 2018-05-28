@@ -14,8 +14,8 @@ def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
 
 class DCGAN(object):
-  def __init__(self, sess, input_height=128, input_width=128, crop=False,
-         batch_size=64, sample_num = 64, output_height=128, output_width=128,
+  def __init__(self, sess, input_height=64, input_width=64, crop=False,
+         batch_size=64, sample_num = 64, output_height=64, output_width=64,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, origin_name='default', dataset_name='default', 
          input_fname_pattern="*.png", checkpoint_dir=None, sample_dir=None, data_dir='./data'):
@@ -351,7 +351,7 @@ class DCGAN(object):
             except:
               print("one pic error!...")
 
-        if np.mod(counter, 500) == 1:
+        if np.mod(counter, 150) in range(10) and errG < 0.3:
           self.save(config.checkpoint_dir, counter)
 
   def discriminator(self, image, y=None, reuse=False):

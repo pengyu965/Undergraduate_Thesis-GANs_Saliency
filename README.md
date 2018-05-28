@@ -6,7 +6,7 @@ To train a model with downloaded dataset:
     $ python main.py --dataset celebA --input_height=108 --train --crop
     $ python main.py --origin out_input --dataset out_gt  --input_fname_pattern="*.png" --train
     $ python main.py --origin input --dataset input_gt  --input_fname_pattern="*.png" --input_height=128 --input_width=128 --output_height=128 --output_width=128 --batch_size=64 --train
-    $ python3 main.py --origin joined_input_frame --dataset gt --input_height=256 --input_width=256 --output_height=256 --output_width=256 --train
+    $ python main.py --origin joined_input_frame --dataset gt --input_width=256 --input_height=256 --output_width=256 --output_height=256 --train
     
 
 To test with an existing model:
@@ -14,6 +14,7 @@ To test with an existing model:
     $ python main.py --dataset mnist --input_height=28 --output_height=28
     $ python main.py --dataset celebA --input_height=108 --crop
     $ python main.py --origin test --dataset test_gt  --input_fname_pattern="*.png" --input_height=128 --input_width=128 --output_height=128 --output_height=128 --batch_size=1
+    $ python3 main.py --origin test --dataset test_gt --input_width=256 --input_height=256 --output_width=256 --output_height=256 --batch_size=1
 
 Or, you can use your own dataset (without central crop) by:
 
