@@ -181,6 +181,7 @@ def visualize(sess, dcgan, config, option):
     all_file_name = os.listdir("./data/"+dcgan.origin_name)
     i = 1
     for idx in all_file_name:
+      new_idx = os.path.splitext(idx)[0]
       print(" [Saliency]_%s" % idx)
       # z_sample = scipy.misc.imread("./data/out_input/"+idx).astype(np.float)
       # dcgan.batch_size = 1
@@ -196,7 +197,7 @@ def visualize(sess, dcgan, config, option):
       samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: origin_batch_images})
       # samples.save('./samples/test_arange_%s.png' % (idx))
       i = i+1
-      save_images(samples,[image_frame_dim, image_frame_dim], './test_result/test_arange_%s.png' % (idx))
+      save_images(samples,[image_frame_dim, image_frame_dim], './test_result/%s.png' % (new_idx))
       if i * config.batch_size > len(dcgan.origin_data):
         break
 
